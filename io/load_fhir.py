@@ -1,4 +1,6 @@
 import json
+from concurrent.futures import ProcessPoolExecutor
+import os
 from pathlib import Path
 import pandas as pd
 
@@ -20,6 +22,40 @@ def read_ndjson(path):
 
             if isinstance(record, dict):
                 records.append(record)
+
+    return records
+
+def parse_line_batch(lines):
+    """Worker function executed in parallel across CPU cores"""
+    records = []
+    for line in lines:
+        line = line.strip()
+        if line:
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return records
+
+def read_ndjson_parallel(path, chunk_size=50000):
+    """Reads large ndjson files using all available CPU cores"""
+    records = []
+    max_workers = os.cpu_count() or 4
+    
+    with open(path, "r", encoding="utf-8") as f, ProcessPoolExecutor(max_workers=max_workers) as executor:
+        batch = []
+        futures = []
+        
+        for line in f:
+            batch.append(line)
+            if len(batch) >= chunk_size:
+                futures.append(executor.submit(parse_line_batch, batch))
+                batch = []
+        if batch:
+            futures.append(executor.submit(parse_line_batch, batch))
+
+        for future in futures:
+            records.extend(future.result())
 
     return records
 
