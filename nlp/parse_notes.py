@@ -1,0 +1,33 @@
+from parsing.get_data import *
+from parsing.extract_fields import *
+from decode_base64 import *
+
+def extract_notes(records):
+    rows = []
+    for doc in records:
+        subject_id = get_subject_id(doc)
+        context = doc.get("context") or {}
+
+        encounter_refs = context.get("encounter") or []
+        if isinstance(encounter_refs, dict):
+            encounter_refs = [encounter_refs]
+        encounter_ref = encounter_refs[0] if encounter_refs else {}
+
+        coding_display = extract_first_coding_display(doc)
+
+        decoded_payloads = list(find_base64(doc))
+        if not decoded_payloads:
+            decoded_payloads = [None]
+
+        for text in decoded_payloads:
+            rows.append({
+                "patient_id": subject_id,
+                "document_id": doc.get("id"),
+                "encounter_id": get_reference_id(encounter_ref.get("reference")),
+                "encounter_display": encounter_ref.get("display"),
+                "coding_display": coding_display,
+                "date": doc.get("date"),
+                "text": text,
+            })
+
+    return rows
