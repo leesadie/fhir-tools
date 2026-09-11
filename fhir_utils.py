@@ -1,36 +1,45 @@
 import pandas as pd
 
+def get_path(data, path, default=None):
+    """Safely fetch nested keys/indexes using dot notation"""
+    curr = data
+    for key in path.split("."):
+        if isinstance(curr, dict):
+            curr = curr.get(key)
+        elif isinstance(curr, list) and key.isdigit():
+            idx = int(key)
+            curr = curr[idx] if idx < len(curr) else None
+        else:
+            return default
+        if curr is None:
+            return default
+    return curr
+
 def get_reference_id(value):
     """
     Strips prefix of FHIR reference 
     Example: 'Patient/123' -> '123'
     """
+    if isinstance(value, dict):
+        value = value.get("reference")
     if not isinstance(value, str):
         return None
     return value.rsplit("/", 1)[-1]
 
 def get_subject_id(resource):
-    subject = resource.get("subject")
-    if isinstance(subject, dict):
-        return get_reference_id(subject.get("reference"))
-    return None
+    return get_reference_id(resource.get("subject"))
 
 def get_coding_display(value):
     """
     Returns the first coding.display from a CodeableConcept
     or list of CodeableConcepts
     """
-    if isinstance(value, dict):
-        value = [value]
-    if not isinstance(value, list):
-        return None
-    for concept in value:
+    concepts = value if isinstance(value, list) else [value]
+    for concept in concepts:
         if not isinstance(concept, dict):
             continue
         codings = concept.get("coding", [])
-        if isinstance(codings, dict):
-            codings = [codings]
-
+        codings = codings if isinstance(codings, list) else [codings]
         for coding in codings:
             if isinstance(coding, dict) and coding.get("display"):
                 return coding["display"]

@@ -1,6 +1,31 @@
-from parsing.get_data import *
-from parsing.extract_fields import *
 from decode_base64 import *
+from fhir_utils import get_subject_id, get_reference_id
+
+def extract_first_coding_display(doc):
+    """
+    Returns the first non-empty coding.display found in doc['type'] or doc['category'].
+    """
+    for field in ("type", "category"):
+        field_value = doc.get(field)
+        if not field_value:
+            continue
+            
+        # Normalize CodeableConcept to list
+        concepts = field_value if isinstance(field_value, list) else [field_value]
+        
+        for concept in concepts:
+            if not isinstance(concept, dict):
+                continue
+                
+            codings = concept.get("coding", [])
+            if isinstance(codings, dict):
+                codings = [codings]
+                
+            for coding in codings:
+                if isinstance(coding, dict) and coding.get("display"):
+                    return coding["display"]
+                    
+    return None
 
 def extract_notes(records):
     rows = []
