@@ -1,6 +1,6 @@
 # Common resource extraction schemas
-from extract_fields import extract_resources, extract_epic_mrn, extract_patient_name, extract_ethnicity
-from fhir_utils import get_subject_id, get_reference_id, get_coding_display
+from extract_fields import extract_epic_mrn, extract_patient_name, extract_ethnicity
+from utils import get_subject_id, get_reference_id, get_coding_display
 
 PATIENT_SCHEMA = {
     "patient_id": "id",

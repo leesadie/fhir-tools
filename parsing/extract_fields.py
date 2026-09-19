@@ -1,4 +1,4 @@
-from fhir_utils import get_path
+from utils import get_path
 
 def extract_resources(records: list, schema: dict):
     """

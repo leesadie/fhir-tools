@@ -1,5 +1,5 @@
 from decode_base64 import *
-from fhir_utils import get_subject_id, get_reference_id
+from utils import get_subject_id, get_reference_id
 
 def extract_first_coding_display(doc):
     """
